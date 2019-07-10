@@ -1,0 +1,10 @@
+{
+  "name": "chattie",
+  "version": "1.0.0",
+  "description": "A simple chat application",
+  "main": "index.js",
+  "repository": "https://gitlab.com/eyal0803/chattie",
+  "author": "Eyal Cherevatzki",
+  "license": "UNLICENSED",
+  "private": true
+}
