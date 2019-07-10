@@ -1,0 +1,20 @@
+{
+  "name": "@chattie/backend",
+  "version": "1.0.0",
+  "description": "A backend for Chattie",
+  "author": "Eyal Cherevatzki",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "src/index.ts",
+  "typings": "dist/index.d.ts",
+  "scripts": {
+    "start": "nodemon",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "nodemon": "^1.19.1",
+    "ts-node": "^8.3.0",
+    "tslint": "^5.18.0",
+    "typescript": "^3.5.3"
+  }
+}
