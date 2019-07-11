@@ -6,7 +6,8 @@
     "quotemark": [true, "single", "jsx-double", "avoid-escape"],
     "semicolon": [true, "never"],
     "arrow-parens": [true, "ban-single-arg-parens"],
-    "interface-name": [true, "never-prefix"]
+    "interface-name": [true, "never-prefix"],
+    "curly": [true, "ignore-same-line"]
   },
   "rulesDirectory": []
 }
