@@ -7,7 +7,15 @@
     "semicolon": [true, "never"],
     "arrow-parens": [true, "ban-single-arg-parens"],
     "interface-name": [true, "never-prefix"],
-    "curly": [true, "ignore-same-line"]
+    "curly": [true, "ignore-same-line"],
+    "variable-name": {
+      "options": [
+        "ban-keywords",
+        "check-format",
+        "allow-leading-underscore",
+        "allow-pascal-case"
+      ]
+    }
   },
   "rulesDirectory": []
 }

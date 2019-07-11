@@ -1,19 +1,54 @@
-import React from 'react'
-import { BrowserRouter, Route } from 'react-router-dom'
-import AuthButton from './AuthButton'
-import PrivateRoute from './PrivateRoute'
+import jwt from 'jsonwebtoken'
+import React, { useState } from 'react'
+import { BrowserRouter, Redirect, Route } from 'react-router-dom'
+import Home from './Home'
+import Login from './Login'
+import { User } from './types'
 
-const Home = () => <h1>Home</h1>
-
-const Login = () => <h1>Login</h1>
+const initialToken = sessionStorage.getItem('token')
+const initialUser = initialToken ? (jwt.decode(initialToken) as User) : null
 
 const App = () => {
+  const [user, setUser] = useState(initialUser)
+  const isAuthenticated = user !== null
+
+  const onLoginSuccess = (token: string) => {
+    const _user = jwt.decode(token) as User
+    setUser(_user)
+  }
+
+  const onLogout = () => {
+    sessionStorage.removeItem('token')
+    setUser(null)
+  }
+
   return (
     <BrowserRouter>
-      <PrivateRoute path="/" exact component={Home} />
-      <Route path="/login" exact component={Login} />
+      {/* Home page (only for authenticated users) */}
+      <Route
+        exact
+        path="/"
+        render={() =>
+          isAuthenticated ? (
+            <Home user={user as User} onLogout={onLogout} />
+          ) : (
+            <Redirect to="/login" />
+          )
+        }
+      />
 
-      <AuthButton />
+      {/* Login page (only for NOT authenticated users) */}
+      <Route
+        exact
+        path="/login"
+        render={() =>
+          isAuthenticated ? (
+            <Redirect to="/" />
+          ) : (
+            <Login onSuccess={onLoginSuccess} />
+          )
+        }
+      />
     </BrowserRouter>
   )
 }

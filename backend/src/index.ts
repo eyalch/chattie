@@ -12,7 +12,7 @@ const app = express()
 
 app.use(cors({ origin: 'http://localhost:3000' }))
 
-app.post('/login', (req, res) => {
+app.post('/api/login', (req, res) => {
   // Parse the HTTP Authorization header to get the encoded username & password
   const credentials = parseAuthorization(req.headers.authorization)
 
