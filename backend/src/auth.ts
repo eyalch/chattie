@@ -1,5 +1,31 @@
+import { RequestHandler } from 'express'
+import jwt from 'jsonwebtoken'
+import { SECRET } from './config'
+
+export const loginHandler: RequestHandler = (req, res) => {
+  // Parse the HTTP Authorization header to get the encoded username & password
+  const credentials = parseAuthorization(req.headers.authorization)
+
+  if (!credentials) {
+    return res
+      .set('WWW-Authenticate', 'Basic')
+      .status(401)
+      .json({ error: 'A valid Authorization header is required!' })
+  }
+
+  const [username, password] = credentials
+
+  if (password !== 'chattie') {
+    return res.status(401).json({ error: 'Invalid credentials' })
+  }
+
+  const token = jwt.sign({ username }, SECRET)
+
+  res.json({ token })
+}
+
 // Validate the HTTP Authorization header and return the credentials
-export const parseAuthorization: (
+const parseAuthorization: (
   authorization: string | undefined,
 ) => [string, string] | null = authorization => {
   // Ensure that the header is not empty and has two fields

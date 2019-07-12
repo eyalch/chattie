@@ -1,9 +1,7 @@
 import React, { useState } from 'react'
 
 const API_URL =
-  process.env.NODE_ENV === 'development'
-    ? 'http://localhost:8000'
-    : window.location.origin
+  process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : ''
 
 const Login = ({ onSuccess }: { onSuccess(token: string): void }) => {
   const [username, setUsername] = useState('user')

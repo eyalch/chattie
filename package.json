@@ -13,7 +13,7 @@
   ],
   "scripts": {
     "build": "yarn workspaces run build && rimraf build && cp -r backend/build . && cp -r frontend/build build/frontend",
-    "start": "node build/index.js"
+    "start": "node build/backend/src/index.js"
   },
   "devDependencies": {
     "rimraf": "^2.6.3"

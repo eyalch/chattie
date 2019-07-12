@@ -1,47 +1,48 @@
 import cors from 'cors'
 import express from 'express'
-import jwt from 'jsonwebtoken'
+import http from 'http'
 import path from 'path'
-import { parseAuthorization } from './helpers'
-
-const PORT = process.env.PORT || 8000
-const SECRET = 'Chatt1e_s3cret'
-const FRONTEND_DIR = 'frontend'
+import SocketIO from 'socket.io'
+import socketioJwt from 'socketio-jwt'
+import { User } from '../../types'
+import { loginHandler } from './auth'
+import { DEV, FRONTEND_DEV_URL, FRONTEND_DIR, PORT, SECRET } from './config'
 
 const app = express()
+const server = http.createServer(app)
+const io = SocketIO(server)
 
-app.use(cors({ origin: 'http://localhost:3000' }))
+interface SocketWithUser extends SocketIO.Socket {
+  user: User
+}
 
-app.post('/api/login', (req, res) => {
-  // Parse the HTTP Authorization header to get the encoded username & password
-  const credentials = parseAuthorization(req.headers.authorization)
+io.sockets
+  .on(
+    'connection',
+    socketioJwt.authorize({ decodedPropertyName: 'user', secret: SECRET }),
+  )
+  .on('authenticated', (socket: SocketWithUser) => {
+    console.log(`User '${socket.user.username}' has logged in`)
+  })
 
-  if (!credentials) {
-    res
-      .set('WWW-Authenticate', 'Basic')
-      .status(401)
-      .json({ error: 'A valid Authorization header is required!' })
-    return
-  }
+// Use CORS only in development
+if (DEV) {
+  app.use(cors({ origin: FRONTEND_DEV_URL }))
+}
 
-  const [username, password] = credentials
-
-  if (password !== 'chattie') {
-    res.status(401).json({ error: 'Invalid credentials' })
-    return
-  }
-
-  const token = jwt.sign({ username }, SECRET)
-
-  res.json({ token })
-})
+app.post('/api/login', loginHandler)
 
 // Serve the static files
 app.use(express.static(path.join(__dirname, FRONTEND_DIR)))
 
 // Serve the frontend React app
 app.get('*', (req, res) => {
+  // When in development, redirect to the React dev server
+  if (DEV) {
+    return res.redirect(FRONTEND_DEV_URL)
+  }
+
   res.sendFile(path.join(__dirname, FRONTEND_DIR, 'index.html'))
 })
 
-app.listen(PORT, () => console.log(`Running at http://localhost:${PORT}/`))
+server.listen(PORT, () => console.log(`Running at http://localhost:${PORT}/`))
