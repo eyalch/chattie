@@ -1,27 +1,35 @@
 import { RequestHandler } from 'express'
 import jwt from 'jsonwebtoken'
 import { SECRET } from './config'
+import { ErrorWithStatus } from './errors'
+import * as users from './models/users'
 
-export const loginHandler: RequestHandler = (req, res) => {
+export const loginHandler: RequestHandler = async (req, res, next) => {
+  // Return an HTTP 401 and a message
+  const authorizationError = (message: string) =>
+    next(new ErrorWithStatus(message, 401))
+
   // Parse the HTTP Authorization header to get the encoded username & password
   const credentials = parseAuthorization(req.headers.authorization)
 
   if (!credentials) {
-    return res
-      .set('WWW-Authenticate', 'Basic')
-      .status(401)
-      .json({ error: 'A valid Authorization header is required!' })
+    res.set('WWW-Authenticate', 'Basic')
+    return authorizationError('A valid Authorization header is required!')
   }
 
   const [username, password] = credentials
 
-  if (password !== 'chattie') {
-    return res.status(401).json({ error: 'Invalid credentials' })
+  if (await users.isUserLoggedIn(username)) {
+    return authorizationError('Username is already taken')
+  } else if (password !== 'chattie') {
+    return authorizationError('Invalid credentials')
   }
 
-  const token = jwt.sign({ username }, SECRET)
+  jwt.sign({ username }, SECRET, (err: Error, token: string) => {
+    if (err) return next(new Error())
 
-  res.json({ token })
+    res.json({ token })
+  })
 }
 
 // Validate the HTTP Authorization header and return the credentials

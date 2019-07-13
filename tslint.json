@@ -15,7 +15,8 @@
         "allow-leading-underscore",
         "allow-pascal-case"
       ]
-    }
+    },
+    "member-access": [true, "no-public"]
   },
   "rulesDirectory": []
 }

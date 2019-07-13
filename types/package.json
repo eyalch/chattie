@@ -1,0 +1,8 @@
+{
+  "name": "@types/chattie",
+  "version": "1.0.0",
+  "description": "Type definitions for Chattie",
+  "author": "Eyal Cherevatzki",
+  "license": "UNLICENSED",
+  "private": true
+}
