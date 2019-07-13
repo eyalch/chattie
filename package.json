@@ -18,7 +18,8 @@
     "clean": "rimraf build",
     "copy-build-dirs": "cp -r backend/build . && cp -r frontend/build build/frontend",
     "build": "yarn build:backend && yarn build:frontend && yarn clean && yarn copy-build-dirs",
-    "start": "node build/index.js"
+    "start": "node build/index.js",
+    "start:pm2": "pm2 startOrReload pm2.json"
   },
   "devDependencies": {
     "rimraf": "^2.6.3"

@@ -20,7 +20,7 @@ const Home = ({ token, onLogout }: Props) => {
   const [users, setUsers] = useState<string[]>([])
 
   useEffect(() => {
-    const socket = io.connect('http://localhost:8000')
+    const socket = io()
 
     socket.on('connect', () => {
       // BUG: A new socket is opened after each reconnection
