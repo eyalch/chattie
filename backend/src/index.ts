@@ -1,4 +1,3 @@
-import { User } from 'chattie'
 import cors from 'cors'
 import express from 'express'
 import http from 'http'
@@ -9,6 +8,7 @@ import { loginHandler } from './auth'
 import { DEV, FRONTEND_DEV_URL, FRONTEND_DIR, PORT, SECRET } from './config'
 import { errorHandler } from './errors'
 import * as users from './models/users'
+import { User } from './types'
 
 const nameof = <T>(name: keyof T) => name
 
@@ -20,23 +20,28 @@ interface SocketWithUser extends SocketIO.Socket {
   user: User
 }
 
-io.sockets
-  .on(
-    'connection',
-    socketioJwt.authorize({
-      decodedPropertyName: nameof<SocketWithUser>('user'),
-      secret: SECRET,
-    }),
-  )
-  .on('authenticated', (socket: SocketWithUser) => {
-    const { username } = socket.user
-    users.login(username)
+io.on(
+  'connection',
+  socketioJwt.authorize({
+    decodedPropertyName: nameof<SocketWithUser>('user'),
+    secret: SECRET,
+  }),
+)
 
-    socket.on('disconnect', () => users.logout(username))
+io.on('authenticated', (socket: SocketWithUser) => {
+  const { username } = socket.user
+  users.login(username)
+
+  socket.on('message', (recipient, message) => {
+    console.log(`From '${username}' to '${recipient}': "${message}"`)
   })
 
+  socket.on('disconnect', () => users.logout(username))
+})
+
+// Listen for user logins/logouts and notify the connected users
 users.subscribe(usernames => {
-  io.sockets.emit('users', usernames)
+  io.emit('users', usernames)
 })
 
 // Use CORS only in development

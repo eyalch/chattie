@@ -9,8 +9,7 @@
   "private": true,
   "workspaces": [
     "backend",
-    "frontend",
-    "types"
+    "frontend"
   ],
   "scripts": {
     "build:backend": "yarn workspace @chattie/backend build",

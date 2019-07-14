@@ -1,13 +1,14 @@
 import { RequestHandler } from 'express'
 import jwt from 'jsonwebtoken'
 import { SECRET } from './config'
-import { ErrorWithStatus } from './errors'
+import { CustomError } from './errors'
 import * as users from './models/users'
+import { LoginError } from './types'
 
 export const loginHandler: RequestHandler = async (req, res, next) => {
   // Return an HTTP 401 and a message
-  const authorizationError = (message: string) =>
-    next(new ErrorWithStatus(message, 401))
+  const authorizationError = (message: string, code: number = -1) =>
+    next(new CustomError(message, 401, code))
 
   // Parse the HTTP Authorization header to get the encoded username & password
   const credentials = parseAuthorization(req.headers.authorization)
@@ -20,9 +21,15 @@ export const loginHandler: RequestHandler = async (req, res, next) => {
   const [username, password] = credentials
 
   if (await users.isUserLoggedIn(username)) {
-    return authorizationError('Username is already taken')
+    return authorizationError(
+      'Username is already taken',
+      LoginError.UsernameTaken,
+    )
   } else if (password !== 'chattie') {
-    return authorizationError('Invalid credentials')
+    return authorizationError(
+      'Invalid credentials',
+      LoginError.InvalidCredentials,
+    )
   }
 
   jwt.sign({ username }, SECRET, (err: Error, token: string) => {

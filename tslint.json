@@ -16,7 +16,9 @@
         "allow-pascal-case"
       ]
     },
-    "member-access": [true, "no-public"]
+    "member-access": [true, "no-public"],
+    "object-literal-sort-keys": false,
+    "object-literal-key-quotes": [true, "as-needed"]
   },
   "rulesDirectory": []
 }
