@@ -8,8 +8,8 @@ import Typography from '@material-ui/core/Typography'
 import LockOutlinedIcon from '@material-ui/icons/LockOutlined'
 import React, { useState } from 'react'
 import styled, { createGlobalStyle } from 'styled-components'
-import { API_URL } from './config'
-import { LoginError } from './types'
+import { API_URL } from '../config'
+import { LoginError } from '../types'
 
 const GlobalStyles = createGlobalStyle`
   #root {

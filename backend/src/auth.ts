@@ -1,6 +1,6 @@
 import { RequestHandler } from 'express'
 import jwt from 'jsonwebtoken'
-import { SECRET } from './config'
+import { SECRET, USER_PASSWORD } from './config'
 import { CustomError } from './errors'
 import * as users from './models/users'
 import { LoginError } from './types'
@@ -25,7 +25,7 @@ export const loginHandler: RequestHandler = async (req, res, next) => {
       'Username is already taken',
       LoginError.UsernameTaken,
     )
-  } else if (password !== 'chattie') {
+  } else if (password !== USER_PASSWORD) {
     return authorizationError(
       'Invalid credentials',
       LoginError.InvalidCredentials,

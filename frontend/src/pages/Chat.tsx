@@ -2,13 +2,13 @@ import jwt from 'jsonwebtoken'
 import React, { useEffect, useState } from 'react'
 import io from 'socket.io-client'
 import styled, { createGlobalStyle, keyframes } from 'styled-components'
+import { API_URL } from '../config'
+import Loading from '../Loading'
+import { User } from '../types'
 import ActiveChat from './Chat/ActiveChat'
 import MessageInput from './Chat/MessageInput'
 import UserBar from './Chat/UserBar'
 import Users from './Chat/Users'
-import { API_URL } from './config'
-import Loading from './Loading'
-import { User } from './types'
 
 const LOADING_MESSAGES = {
   AUTHENTICATING: 'Authenticating...',
@@ -36,9 +36,17 @@ const StyledChat = styled.div`
   display: flex;
   flex-direction: column;
   box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.06), 0 2px 5px 0 rgba(0, 0, 0, 0.2);
+  animation: ${enterAnimation} 0.4s ease;
   min-height: 400px;
 
-  animation: ${enterAnimation} 0.4s ease;
+  ${p => p.theme.breakpoints.down('sm')} {
+    height: 100%;
+  }
+
+  @media (max-height: 400px) {
+    height: 100%;
+    min-height: auto;
+  }
 `
 const StyledSidesWrapper = styled.div`
   display: flex;

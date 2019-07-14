@@ -8,6 +8,7 @@ import styled from 'styled-components'
 const StyledAppBar = styled(AppBar)`
   background-color: #eee;
   box-shadow: none;
+  border-bottom: 1px solid lightgrey;
 `
 const StyledGreeting = styled(Typography)`
   flex-grow: 1;

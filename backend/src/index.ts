@@ -20,6 +20,8 @@ interface SocketWithUser extends SocketIO.Socket {
   user: User
 }
 
+const socketMap: { [username: string]: SocketWithUser } = {}
+
 io.on(
   'connection',
   socketioJwt.authorize({

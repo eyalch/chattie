@@ -3,8 +3,9 @@ import React, { useState } from 'react'
 import styled from 'styled-components'
 
 const StyledInput = styled(Input)`
-  padding: ${p => p.theme.spacing(1)}px;
+  padding: 10px 15px;
   background-color: #eee;
+  font-size: 18px;
 `
 
 interface Props {
@@ -32,6 +33,7 @@ const MessageInput = ({ onSend }: Props) => {
       inputProps={{
         'aria-label': 'Description',
       }}
+      disableUnderline
     />
   )
 }

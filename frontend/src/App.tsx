@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { BrowserRouter, Redirect, Route } from 'react-router-dom'
-import Chat from './Chat'
 import Layout from './Layout'
-import Login from './Login'
+import Chat from './pages/Chat'
+import Login from './pages/Login'
 
 const initialToken = sessionStorage.getItem('token')
 
