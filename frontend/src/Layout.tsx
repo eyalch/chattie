@@ -13,19 +13,15 @@ body,
 #root {
   height: 100%;
 }
-
-#root {
-  display: flex;
-  align-items: center;
-}
 `
 const StyledContainer = styled(Container)`
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   ${p => p.theme.breakpoints.down('sm')} {
     padding: 0;
-  }
-
-  @media (max-height: 400px) {
-    height: 100%;
   }
 `
 

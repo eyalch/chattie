@@ -1,12 +1,13 @@
+import Snackbar from '@material-ui/core/Snackbar'
 import jwt from 'jsonwebtoken'
-import React, { useEffect, useState } from 'react'
+import React, { Component, createRef } from 'react'
 import io from 'socket.io-client'
 import styled, { createGlobalStyle, keyframes } from 'styled-components'
 import { API_URL } from '../config'
 import Loading from '../Loading'
-import { User } from '../types'
-import ActiveChat from './Chat/ActiveChat'
+import { Message, User } from '../types'
 import MessageInput from './Chat/MessageInput'
+import Messages from './Chat/Messages'
 import UserBar from './Chat/UserBar'
 import Users from './Chat/Users'
 
@@ -35,9 +36,11 @@ const enterAnimation = keyframes`
 const StyledChat = styled.div`
   display: flex;
   flex-direction: column;
+  flex-grow: 1;
   box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.06), 0 2px 5px 0 rgba(0, 0, 0, 0.2);
   animation: ${enterAnimation} 0.4s ease;
-  min-height: 400px;
+  height: 600px;
+  height: 80%;
 
   ${p => p.theme.breakpoints.down('sm')} {
     height: 100%;
@@ -45,12 +48,12 @@ const StyledChat = styled.div`
 
   @media (max-height: 400px) {
     height: 100%;
-    min-height: auto;
   }
 `
 const StyledSidesWrapper = styled.div`
   display: flex;
   flex-grow: 1;
+  max-height: calc(100% - 65px);
 `
 const StyledLeft = styled.div`
   flex: 30%;
@@ -78,91 +81,184 @@ interface Props {
   onLogout(): void
 }
 
-let user: User
-let socket: SocketIOClient.Socket
+interface AllMessages {
+  [username: string]: Message[]
+}
 
-const Home = ({ token, onLogout }: Props) => {
-  // Decode the user from the token
-  if (!user) {
-    user = jwt.decode(token) as User
+interface State {
+  loadingMessage: string
+  users: string[]
+  recipient: string
+  messages: AllMessages
+  newMessage: Message | null
+}
+
+export default class Chat extends Component<Props, State> {
+  user: User
+  socket: SocketIOClient.Socket | null = null
+
+  messagesRef = createRef<HTMLDivElement>()
+
+  constructor(props: Props) {
+    super(props)
+
+    // Decode the user from the token
+    this.user = jwt.decode(props.token) as User
+
+    this.state = {
+      loadingMessage: LOADING_MESSAGES.LOADING,
+      users: [],
+      recipient: '',
+      messages: {},
+      newMessage: null,
+    }
   }
 
-  const [loadingMessage, setLoadingMessage] = useState(LOADING_MESSAGES.LOADING)
-  const [users, setUsers] = useState<string[]>([])
-  const [recipient, setRecipient] = useState('')
+  addMessage = (message: Message) => {
+    const { recipient } = this.state
 
-  useEffect(() => {
-    socket = io(API_URL)
+    const otherUser =
+      message.sender === this.user.username ? message.recipient : message.sender
 
-    socket.on('connect', () => {
-      // BUG: A new socket is opened after each reconnection
+    // If the other user is not the current user we're chatting with then notify the user
+    if (otherUser !== recipient) {
+      this.setState({ newMessage: message })
+    }
 
-      setLoadingMessage(LOADING_MESSAGES.AUTHENTICATING)
+    this.setState(({ messages: prevMessages }) => ({
+      messages: {
+        ...prevMessages,
+        [otherUser]: (prevMessages[otherUser] || []).concat(message),
+      },
+    }))
+  }
 
-      socket.emit('authenticate', { token })
+  componentDidMount() {
+    this.socket = io(API_URL)
+
+    this.socket.on('connect', () => {
+      this.setState({ loadingMessage: LOADING_MESSAGES.AUTHENTICATING })
+
+      this.socket!.emit('authenticate', { token: this.props.token })
     })
 
     // Handle reconnection
-    socket.on('reconnecting', () => {
-      setLoadingMessage(LOADING_MESSAGES.RECONNECTING)
+    this.socket.on('reconnecting', () => {
+      this.setState({ loadingMessage: LOADING_MESSAGES.RECONNECTING })
 
-      // socket.once('reconnect', () => setLoadingMessage(''))
+      // this.socket.once('reconnect', () => setLoadingMessage(''))
     })
 
-    socket.on('authenticated', () => setLoadingMessage(''))
+    this.socket.on('authenticated', () => this.setState({ loadingMessage: '' }))
 
-    socket.on('unauthorized', () => {
-      onLogout()
+    this.socket.on('unauthorized', () => {
+      this.props.onLogout()
       alert('There has been an error logging in. Please try again.')
     })
 
     // Update users list
-    socket.on('users', (usernames: string) => {
-      setUsers(usernames.split(',').filter(u => u !== user.username))
+    this.socket.on('users', (usernames: string[]) => {
+      this.setState({
+        users: [...usernames.filter(u => u !== this.user.username)],
+      })
     })
 
-    return () => {
-      socket.close()
+    // Listen for messages
+    this.socket.on('message', this.addMessage)
+
+    // Check if there are backed-up messages and use them if there are
+    const backupMessages = sessionStorage.getItem(
+      `messages_${this.user.username}`,
+    )
+    if (backupMessages) {
+      this.setState({ messages: JSON.parse(backupMessages) })
     }
-  }, [token, onLogout])
+  }
 
-  if (loadingMessage) return <Loading message={loadingMessage} />
+  componentDidUpdate(prevProps: Props, prevState: State) {
+    if (prevState.messages !== this.state.messages) {
+      // Backup messages to local storage
+      sessionStorage.setItem(
+        `messages_${this.user.username}`,
+        JSON.stringify(this.state.messages),
+      )
 
-  return (
-    <StyledChat>
-      <GlobalStyles />
+      // Scroll to the bottom of the messages
+      if (this.messagesRef.current) {
+        this.messagesRef.current.scrollTo({
+          top: this.messagesRef.current.scrollHeight,
+          behavior: 'smooth',
+        })
+      }
+    }
+  }
 
-      <UserBar username={user.username} onLogout={onLogout} />
+  onSend = (message: string) => {
+    this.addMessage({
+      recipient: this.state.recipient,
+      sender: this.user.username,
+      text: message,
+      timestamp: new Date().toISOString(),
+    })
+    this.socket!.emit('message', this.state.recipient, message)
+  }
 
-      <StyledSidesWrapper>
-        <StyledLeft>
-          <Users
-            users={users}
-            activeUser={recipient}
-            onSelectUser={u => setRecipient(u)}
-          />
-        </StyledLeft>
+  render() {
+    const {
+      loadingMessage,
+      users,
+      recipient,
+      messages,
+      newMessage,
+    } = this.state
 
-        <StyledRight>
-          {recipient ? (
-            <ActiveChat />
-          ) : (
-            <StyledInstructions>
-              Welcome to Chattie!
-              <br />
-              Select a user from the list and start chatting!
-            </StyledInstructions>
-          )}
+    if (loadingMessage) return <Loading message={loadingMessage} />
 
-          {recipient && (
-            <MessageInput
-              onSend={message => socket.emit('message', recipient, message)}
+    return (
+      <StyledChat>
+        <GlobalStyles />
+
+        <UserBar username={this.user.username} onLogout={this.props.onLogout} />
+
+        <StyledSidesWrapper>
+          <StyledLeft>
+            <Users
+              users={users}
+              activeUser={recipient}
+              onSelectUser={u => this.setState({ recipient: u })}
             />
-          )}
-        </StyledRight>
-      </StyledSidesWrapper>
-    </StyledChat>
-  )
-}
+          </StyledLeft>
 
-export default Home
+          <StyledRight>
+            {recipient ? (
+              <Messages
+                username={this.user.username}
+                messages={messages[recipient]}
+                ref={this.messagesRef}
+              />
+            ) : (
+              <StyledInstructions>
+                Welcome to Chattie!
+                <br />
+                Select a user from the list and start chatting!
+              </StyledInstructions>
+            )}
+
+            {recipient && <MessageInput onSend={this.onSend} />}
+          </StyledRight>
+        </StyledSidesWrapper>
+
+        <Snackbar
+          anchorOrigin={{ horizontal: 'center', vertical: 'top' }}
+          message={
+            newMessage &&
+            `New message from ${newMessage.sender}: "${newMessage.text}"`
+          }
+          open={newMessage !== null}
+          onClose={() => this.setState({ newMessage: null })}
+          autoHideDuration={3000}
+        />
+      </StyledChat>
+    )
+  }
+}

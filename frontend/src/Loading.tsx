@@ -11,7 +11,7 @@ const StyledLoading = styled.div`
   justify-content: center;
 
   p {
-    font-size: 32px;
+    font-size: 28px;
   }
 `
 

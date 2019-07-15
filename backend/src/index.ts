@@ -7,8 +7,9 @@ import socketioJwt from 'socketio-jwt'
 import { loginHandler } from './auth'
 import { DEV, FRONTEND_DEV_URL, FRONTEND_DIR, PORT, SECRET } from './config'
 import { errorHandler } from './errors'
+import * as messages from './models/messages'
 import * as users from './models/users'
-import { User } from './types'
+import { Message, User } from './types'
 
 const nameof = <T>(name: keyof T) => name
 
@@ -34,8 +35,15 @@ io.on('authenticated', (socket: SocketWithUser) => {
   const { username } = socket.user
   users.login(username)
 
+  socketMap[username] = socket
+
   socket.on('message', (recipient, message) => {
-    console.log(`From '${username}' to '${recipient}': "${message}"`)
+    messages.send({
+      sender: username,
+      recipient,
+      text: message,
+      timestamp: new Date().toISOString(),
+    })
   })
 
   socket.on('disconnect', () => users.logout(username))
@@ -43,7 +51,16 @@ io.on('authenticated', (socket: SocketWithUser) => {
 
 // Listen for user logins/logouts and notify the connected users
 users.subscribe(usernames => {
-  io.emit('users', usernames)
+  io.emit('users', JSON.parse(usernames))
+})
+
+// Listen for messages and notify the correct user
+messages.subscribe(({ recipient, sender, text, timestamp }) => {
+  const socket = socketMap[recipient]
+  if (!socket) return
+
+  const message: Message = { sender, recipient, text, timestamp }
+  socket.emit('message', message)
 })
 
 // Use CORS only in development

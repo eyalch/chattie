@@ -22,7 +22,7 @@ const loginLogoutCallback = (err: Error | null) => {
 
   // Get the users and publish them
   client.SMEMBERS(USERS_SET, (_err, users) => {
-    if (!_err) client.PUBLISH(USERS_CHANNEL, users.join(','))
+    if (!_err) client.PUBLISH(USERS_CHANNEL, JSON.stringify(users))
   })
 }
 
@@ -38,6 +38,10 @@ export const subscribe = (cb: (usernames: string) => void) => {
   subscriber.SUBSCRIBE(USERS_CHANNEL, err => {
     if (err) return
 
-    subscriber.on('message', (channel, message) => cb(message))
+    subscriber.on('message', (channel, message) => {
+      if (channel !== USERS_CHANNEL) return
+
+      cb(message)
+    })
   })
 }

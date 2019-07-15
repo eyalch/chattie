@@ -6,6 +6,7 @@ const StyledInput = styled(Input)`
   padding: 10px 15px;
   background-color: #eee;
   font-size: 18px;
+  border-top: 1px solid lightgrey;
 `
 
 interface Props {

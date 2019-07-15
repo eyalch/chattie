@@ -5,7 +5,7 @@ const StyledUsers = styled.div``
 const StyledUser = styled.div<{ active: boolean }>`
   width: 100%;
   height: 64px;
-  padding-left: ${p => (p.active ? 32 : 20)}px;
+  padding-left: ${p => (p.active ? 36 : 20)}px;
   padding-right: 20px;
   display: flex;
   align-items: center;
